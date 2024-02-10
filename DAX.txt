@@ -1,0 +1,618 @@
+--Calculated Columns
+
+Day of Week = 
+WEEKDAY(
+    'Calendar Lookup'[Date],
+    1
+)
+
+
+Weekend = 
+IF(
+    'Calendar Lookup'[Day of Week] IN {6,7},
+    "Weekend",
+    "Weekday"
+)
+
+
+Month Short = 
+UPPER(
+    LEFT(
+        'Calendar Lookup'[Month Name],
+        3
+    )
+)
+
+
+Month Number (SWITCH) = 
+SWITCH(
+    'Calendar Lookup'[Month Name],
+    "January", "1",
+    "February", "2",
+    "March", "3",
+    "April", "4",
+    "May", "5",
+    "June", "6",
+    "July", "7",
+    "August", "8",
+    "September", "9",
+    "October", "10",
+    "November", "11",
+    "December", "12"
+)
+
+
+
+
+Price Point = 
+SWITCH(
+    TRUE(),
+    'Product Lookup'[ProductPrice] > 500, "High",
+    'Product Lookup'[ProductPrice] > 100, "Mid-Range",
+    "Low"
+)
+
+
+Customer Priority = 
+IF(
+    'Customer Lookup'[AnnualIncome] > 100000 &&
+    'Customer Lookup'[Is Parent?] = "Yes",
+    "Priority",
+    "Standard"
+)
+
+
+Education Category = 
+SWITCH(
+    'Customer Lookup'[EducationLevel],
+    "High School", "High School",
+    "Partial High School", "High School",
+    "Bachelors", "Undergrad",
+    "Partial College", "Undergrad",
+    "Graduate Degree", "Graduate"
+)
+
+Income Level = 
+IF('Customer Lookup'[AnnualIncome] >= 150000, "Very High",
+IF('Customer Lookup'[AnnualIncome] >= 100000, "High",
+IF('Customer Lookup'[AnnualIncome] >= 50000, "Average",
+"Low")))
+
+
+Is Parent? = 
+IF(
+    'Customer Lookup'[TotalChildren] > 0, 
+    "Yes",
+    "No"
+)
+
+Quantity Type = 
+IF(
+    'Sales Data'[OrderQuantity] > 1, 
+    "Multiple Items", 
+    "Single Item"
+)
+
+Retail Price = 
+RELATED(
+    'Product Lookup'[ProductPrice]
+)
+
+Revenue = 
+'Sales Data'[Retail Price] * 'Sales Data'[OrderQuantity]
+
+
+
+
+
+--DAX Measure:
+
+Total Customers = 
+DISTINCTCOUNT(
+    'Sales Data'[CustomerKey]
+)
+
+
+Total Orders = 
+DISTINCTCOUNT(
+    'Sales Data'[OrderNumber]
+)
+
+
+Total Returns = 
+COUNT(
+    'Returns Data'[ReturnQuantity]
+)
+
+
+Weekend Orders = 
+CALCULATE(
+    [Total Orders],
+    'Calendar Lookup'[Weekend] = "Weekend"
+)
+
+
+
+
+Quantity Sold = 
+SUM(
+    'Sales Data'[OrderQuantity]
+)
+
+Quantity Returned = 
+SUM(
+    'Returns Data'[ReturnQuantity]
+)
+
+
+Return Rate = 
+DIVIDE(
+    [Quantity Returned],
+    [Quantity Sold],
+    "No Sales"
+)
+
+
+
+Bike Sales = 
+CALCULATE(
+    [Quantity Sold],
+    'Product Categories Lookup'[CategoryName] = "Bikes"
+)
+
+
+Bike Returns = 
+CALCULATE(
+    [Quantity Returned],
+    'Product Categories Lookup'[CategoryName] = "Bikes"
+)
+
+Bike Return Rate = 
+CALCULATE(
+    [Return Rate],
+    'Product Categories Lookup'[CategoryName] = "Bikes"
+)
+
+
+
+
+
+
+
+Total Revenue = 
+SUMX(
+    'Sales Data',
+    'Sales Data'[OrderQuantity]
+    *
+    RELATED(
+        'Product Lookup'[ProductPrice]
+    )
+)
+
+
+Total Cost = 
+SUMX(
+    'Sales Data',
+    'Sales Data'[OrderQuantity]
+    *
+    RELATED(
+        'Product Lookup'[ProductCost]
+    )
+)
+
+Total Profit = 
+[Total Revenue] - [Total Cost]
+
+
+
+
+
+
+
+
+Previous Month Orders = 
+CALCULATE(
+    [Total Orders],
+    DATEADD(
+        'Calendar Lookup'[Date],
+        -1,
+        MONTH
+    )
+)
+
+
+Previous Month Revenue = 
+CALCULATE(
+    [Total Revenue],
+    DATEADD(
+        'Calendar Lookup'[Date],
+        -1,
+        MONTH
+    )
+)
+
+
+Previous Month Profit = 
+CALCULATE(
+    [Total Profit],
+    DATEADD(
+        'Calendar Lookup'[Date],
+        -1,
+        MONTH
+    )
+)
+
+Previous Month Returns = 
+CALCULATE(
+    [Total Returns],
+    DATEADD(
+        'Calendar Lookup'[Date],
+        -1,
+        MONTH
+    )
+)
+
+
+YTD Revenue = 
+CALCULATE(
+    [Total Revenue],
+    DATESYTD(
+        'Calendar Lookup'[Date]
+    )
+) 
+
+
+10-day Rolling Revenue = 
+CALCULATE(
+    [Total Revenue],
+    DATESINPERIOD(
+        'Calendar Lookup'[Date],
+        MAX(
+            'Calendar Lookup'[Date]
+        ),
+        -10,
+        DAY
+    )
+)
+
+
+90-day Rolling Profit = 
+CALCULATE(
+    [Total Profit],
+    DATESINPERIOD(
+        'Calendar Lookup'[Date],
+        LASTDATE(
+            'Calendar Lookup'[Date]
+        ),
+        -90,
+        DAY
+    )
+)
+
+
+
+
+
+
+
+
+Average Revenue per Customer = 
+DIVIDE(
+    [Total Revenue], 
+    [Total Customers]
+)
+
+
+Average Retail Price = 
+AVERAGE(
+    'Product Lookup'[ProductPrice]
+)
+
+
+Bulk Orders = 
+CALCULATE(
+    [Total Orders],
+    'Sales Data'[OrderQuantity] > 1
+)
+
+
+High Ticket Orders = 
+CALCULATE(
+    [Total Orders],
+    FILTER(
+        'Product Lookup',
+        'Product Lookup'[ProductPrice] > [Overall Average Price]
+    )
+)
+
+
+
+
+
+
+
+
+Order Target = 
+[Previous Month Orders] * 1.1
+
+Order Target Gap = [Total Orders] - [Order Target]
+
+
+Revenue Target = 
+[Previous Month Revenue] * 1.1
+
+Revenue Target Gap = [Total Revenue] - [Revenue Target]
+
+
+Profit Target = 
+[Previous Month Profit] * 1.1
+
+Profit Target Gap = [Total Profit] - [Profit Target]
+
+
+
+
+
+
+Price Adjustment (%) = GENERATESERIES(-1, 1, 0.1)
+
+Price Adjustment (%) Value = SELECTEDVALUE('Price Adjustment (%)'[Price Adjustment (%)], 0)
+
+Adjusted Price = [Average Retail Price] * (1 + 'Price Adjustment (%)'[Price Adjustment (%) Value])
+
+
+Adjusted Revenue = 
+SUMX(
+    'Sales Data',
+    'Sales Data'[OrderQuantity]
+    *
+   [Adjusted Price])
+
+Adjusted Profit = 
+[Adjusted Revenue] - [Total Cost]
+
+
+
+
+
+
+
+
+All Orders = 
+CALCULATE(
+    [Total Orders], 
+    ALL(
+        'Sales Data'
+    )
+)
+
+All Returns = 
+CALCULATE(
+    [Total Returns],
+    ALL(
+        'Returns Data'
+    )
+)
+
+
+% of All Orders = 
+DIVIDE(
+    [Total Orders], 
+    [All Orders]
+)
+
+
+% of All Returns = 
+DIVIDE(
+    [Total Returns],
+    [All Returns]
+)
+
+
+
+
+
+
+
+
+Product Metric Selection = {
+    ("Orders", NAMEOF('Measure Table'[Total Orders]), 0),
+    ("Revenue", NAMEOF('Measure Table'[Total Revenue]), 1),
+    ("Profit", NAMEOF('Measure Table'[Total Profit]), 2),
+    ("Returns", NAMEOF('Measure Table'[Total Returns]), 3),
+    ("Return %", NAMEOF('Measure Table'[Return Rate]), 4)
+}
+
+
+Customer Metric Selection = {
+    ("Total Customers", NAMEOF('Measure Table'[Total Customers]), 0),
+    ("Revenue per Customer", NAMEOF('Measure Table'[Average Revenue per Customer]), 1)
+}
+
+
+
+
+
+
+
+
+--Calendar Table in Power BI using DAX [Dynamic]
+
+CalendarTable = 
+
+VAR MinDate = Min(Orders[Order Date])
+
+VAR MaxDate = Max(Orders[Order Date])
+
+VAR Days = CALENDAR(MinDate, MaxDate)
+
+RETURN ADDCOLUMNS (
+    Days,
+    "Year", YEAR ( [Date] ),
+    "Month Number", MONTH ( [Date] ),
+    "Month", FORMAT ( [Date], "mmmm" ),
+    "Year Month", FORMAT ( [Date], "mmm yy" ),
+    "Week Number", WEEKNUM ( [Date] )
+)
+
+--Calendar Table in Power Query Steps [Static]
+
+--Create a Blank Query with the name 'StartDate' and the value '1/1/2009'
+
+--Create another Blank Query with the name 'EndDate' and the value '12/31/2011'
+
+DimDate
+= {Number.From(StartDate)..Number.From(EndDate)}
+
+
+
+
+
+
+
+
+
+
+
+--Cohort Analysis DAX Measures
+
+Months Since First Transaction = 
+DATEDIFF(
+    RELATED(DimCustomers[First Transaction Month]),
+    RELATED(DimDate[Start of Month]),
+    MONTH)
+
+Active Customers = 
+    DISTINCTCOUNT(FactSales[Customer ID])
+
+New Customers = 
+    CALCULATE(
+        [Active Customers],
+        FactSales[Months Since First Transaction] = 0
+    )
+
+
+Cohort Performance = 
+
+VAR _minDate = MIN(DimDate[Start of Month])
+
+VAR _maxDate = MAX(DimDate[Start of Month])
+
+RETURN
+    CALCULATE(
+        [Active Customers],
+        REMOVEFILTERS(DimDate[Start of Month]),
+        RELATEDTABLE(DimCustomers),
+        DimCustomers[First Transaction Month]>= _minDate
+            && DimCustomers[First Transaction Month]<= _maxDate
+    )
+
+
+Retained Customers = 
+
+ VAR _CustomersThisMonth =
+        VALUES(FactSales[Customer ID])
+
+VAR _CustomersLastMonth = 
+    CALCULATETABLE(
+        VALUES(FactSales[Customer ID]),
+        PREVIOUSMONTH(DimDate[Start of Month])
+    )
+
+VAR _RetainedCustomers = 
+    INTERSECT(
+        _CustomersLastMonth, _CustomersThisMonth
+    )
+
+RETURN(
+    COUNTROWS(_RetainedCustomers)
+)
+
+
+Retention Rate = 
+    DIVIDE([Cohort Performance], [New Customers])
+
+Churned Customers = 
+SWITCH(
+    TRUE(),
+    ISBLANK([Retention Rate]),
+    BLANK(),
+        [New Customers] - [Cohort Performance]
+    )
+
+Churned Rate = 
+    DIVIDE([Churned Customers], [New Customers])
+
+
+Lost Customers = 
+
+ VAR _CustomersThisMonth =
+        VALUES(FactSales[Customer ID])
+
+VAR _CustomersLastMonth = 
+    CALCULATETABLE(
+        VALUES(FactSales[Customer ID]),
+        PREVIOUSMONTH(DimDate[Start of Month])
+    )
+
+VAR _LostCustomers = 
+    EXCEPT(
+        _CustomersLastMonth, _CustomersThisMonth
+    )
+
+RETURN(
+    COUNTROWS(_LostCustomers)
+)
+
+
+
+Recovered Customers = 
+
+ VAR _CustomersThisMonth =
+        VALUES(FactSales[Customer ID])
+
+VAR _CustomersLastMonth = 
+    CALCULATETABLE(
+        VALUES(FactSales[Customer ID]),
+        PREVIOUSMONTH(DimDate[Start of Month])
+    )
+
+VAR _NewCustomers =
+    CALCULATETABLE(
+        VALUES(FactSales[Customer ID]),
+        FactSales[Months Since First Transaction] = 0
+    )
+
+VAR _RecoveredCustomers = 
+    EXCEPT(
+        EXCEPT(
+            _CustomersThisMonth, _CustomersLastMonth
+        ),  -- REMOVE LAST MONTH'S CUSTOMERS
+        _NewCustomers
+    ) -- REMOVE NEW CUSTOMERS
+
+RETURN(
+    COUNTROWS(_RecoveredCustomers)
+)
+
+
+Validation = 
+[New Customers] + [Retained Customers] + [Recovered Customers]
+
+
+Difference = 
+[Active Customers] - [Validation]
+
+
+
+Retention Metrics = {
+    ("Cohort Performance", NAMEOF('_Measures'[Cohort Performance]), 0),
+    ("Retention Rate", NAMEOF('_Measures'[Retention Rate]), 1),
+    ("Churned Customers", NAMEOF('_Measures'[Churned Customers]), 2),
+    ("Churned Rate", NAMEOF('_Measures'[Churned Rate]), 3)
+}
+
+Trend Analysis Metrics = {
+    ("Retention Rate", NAMEOF('_Measures'[Retention Rate]), 0),
+    ("Churned Rate", NAMEOF('_Measures'[Churned Rate]), 1)
+}
