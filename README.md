@@ -6,7 +6,8 @@ This project designed by Power BI with Excel data. If you check the Dax measure 
 
 You must install [Power BI](https://www.microsoft.com/en-us/power-platform/products/power-bi) software to create this dashboard.
 
-### Products Detalis:
+# Analysis Image-
+### Products Details:
 ![pd](https://github.com/Azad2181/BI-Adventure-Work-Project-Report/assets/121395998/ecd1973d-a1fa-44bb-a566-8afaefd2e913)
 
 ### Customer Details:
