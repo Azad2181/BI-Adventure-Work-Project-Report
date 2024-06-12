@@ -1,6 +1,6 @@
 # Adventure Works
 
-This project designed by Power BI with excel data. If you check Dax measure from Dax file.
+This project designed by Power BI with Excel data. If you check the Dax measure then you can download the Dax file.
 
 ## Requirements
 
